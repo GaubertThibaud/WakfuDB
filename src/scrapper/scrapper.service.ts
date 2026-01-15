@@ -2,6 +2,7 @@ import { SessionCookies } from "./sessionCookies"
 import fetch from "node-fetch";
 import * as cheerio from 'cheerio'
 import { MetricsAnalyse } from "./metricsAnalyse";
+import { PrismaService } from "../prisma/prisma.service";
 
 export class ScrapperService {
     private userAgent: string;
@@ -9,6 +10,7 @@ export class ScrapperService {
     private maxRetries: number;
     private retryDelayMs: number;
     private metricsAnalyse: MetricsAnalyse; 
+    private prismaService: PrismaService;
 
     constructor() {
         this.userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
@@ -16,6 +18,7 @@ export class ScrapperService {
         this.metricsAnalyse = new MetricsAnalyse(); 
         this.maxRetries = 3;
         this.retryDelayMs = 2000;
+        this.prismaService = new PrismaService();
     }
 
     private async httpRequest(url: string, attempt = 1) { 
@@ -106,10 +109,16 @@ export class ScrapperService {
 
                 const link = $row.find('.ak-linker a').first().attr('href');
                 if (!link) return;
-                const type = $row.find('.item-type img').attr('title');
+                const type = $row.find('.item-type img').attr('title')?.toLocaleLowerCase();
+                const name = this.getItemNameFromUrl(link).toLocaleLowerCase();
 
-                console.log(link);
-                console.log(type);
+                this.prismaService.createListeItemsLinks({
+                    nameFr: name,
+                    url: link,
+                    type: type
+                })
+
+                console.log(name + " Has been added to the database !");
             });
 
             //Check if we are at the end of the pages
@@ -124,13 +133,15 @@ export class ScrapperService {
             };
 
             // A NE PAS oublier !!!!!
-            if (pageNumber == 1) {
+            if (pageNumber == pageNumberMax) {
                 keepGoing = false; 
                 console.log('TEST!');
             };
 
             pageNumber ++;
         };
+
+        return this.prismaService.saveScrapingState(urlInit + '/' + pageType + '?page=' + pageNumber, pageNumber);
     }
 
 
@@ -172,6 +183,11 @@ export class ScrapperService {
         console.log(lastPage);
     }
 
+    public getItemNameFromUrl(path: string): string {
+        const slug = path.split('/').pop()!;
+        const namePart = slug.replace(/^\d+-/, '');
+        return namePart.replace(/-/g, ' ');
+    }
 
     //Transform the text to cheerio.CheerioAPI + give the max page number if it's the 1st page + what is the next page
     //Can alert on cloudflair if there aren't any html
