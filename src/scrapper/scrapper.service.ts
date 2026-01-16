@@ -68,6 +68,7 @@ export class ScrapperService {
         let keepGoing = true;
         let pageNumber = 1;
         let pageNumberMax = 0;
+        let wentThroughAll = false;
 
         while(keepGoing) {
             console.log(' ----- PAGE : ' + pageNumber + ' SUR ' + pageNumberMax + ' ----- ');
@@ -109,7 +110,11 @@ export class ScrapperService {
 
                 const link = $row.find('.ak-linker a').first().attr('href');
                 if (!link) return;
-                const type = $row.find('.item-type img').attr('title')?.toLocaleLowerCase();
+                let type = $row.find('.item-type img').attr('title')?.toLocaleLowerCase();
+                //Overright for the monster on the type
+                if (pageType == 'monstres') {
+                    type = "monstres";
+                }
                 const name = this.getItemNameFromUrl(link).toLocaleLowerCase();
 
                 this.prismaService.createListeItemsLinks({
@@ -135,13 +140,14 @@ export class ScrapperService {
             // A NE PAS oublier !!!!!
             if (pageNumber == pageNumberMax) {
                 keepGoing = false; 
-                console.log('TEST!');
+                wentThroughAll = true;
             };
 
             pageNumber ++;
         };
-
-        return this.prismaService.saveScrapingState(urlInit + '/' + pageType + '?page=' + pageNumber, pageNumber);
+ 
+        this.prismaService.saveScrapingState(urlInit + '/' + pageType + '?page=' + pageNumber, pageNumber);
+        return wentThroughAll;
     }
 
 
