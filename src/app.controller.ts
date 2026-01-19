@@ -24,4 +24,11 @@ export class AppController {
     }
     return this.appService.startScraperList(category); 
   }
+
+  @Get("sanitizeDB")
+  async sanitizeDB() {
+    this.appService.sanitizeDB();
+  }
+
+  
 }

@@ -40,4 +40,37 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         });
     }
 
+    //Because I forgot to put @unique for the url field ! 
+    //Select url, COUNT(*) FROM "ListeItemsLinks" GROUP BY url HAVING COUNT(*) > 1;
+    async sanitizeDB() {
+        const duplicates = await this.listeItemsLinks.groupBy({
+            by: ['url'],
+            _count: { url: true },
+            having: {
+            url: {
+                _count: { gt: 1 },
+            },
+            },
+        })
+
+        const idsToDelete: number[] = []
+
+        for (const dup of duplicates) {
+            const rows = await this.listeItemsLinks.findMany({
+            where: { url: dup.url },
+            orderBy: { id: 'asc' },
+            select: { id: true },
+            })
+
+            idsToDelete.push(...rows.slice(1).map(r => r.id))
+        }
+
+        if (idsToDelete.length) {
+            await this.listeItemsLinks.deleteMany({
+            where: { id: { in: idsToDelete } },
+            })
+        }
+
+        return idsToDelete;
+    }
 }

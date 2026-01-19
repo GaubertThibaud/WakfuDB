@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ScrapperService } from './scrapper/scrapper.service';
+import { PrismaService } from './prisma/prisma.service';
 
 // Categorie not used : compagnons / classes / metiers
 export const CATEGORIES_FR = [
@@ -28,8 +29,12 @@ export class AppService {
     }
 
     //Runing the scrapper manually gave me duplicates of some items and i want to clean everything before getting the EN and ES names
-    async sanitizeDB() {
 
+    async sanitizeDB() {
+      const prismaService = new PrismaService();
+      const res = await prismaService.sanitizeDB();
+      console.log(res.length);
+      console.log(res);
     }
 }
 
