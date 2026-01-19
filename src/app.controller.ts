@@ -25,10 +25,11 @@ export class AppController {
     return this.appService.startScraperList(category); 
   }
 
-  @Get("sanitizeDB")
+  //unCommenting this endpoint if need be (but with the add of the @unique on the DB field should not happend again)
+  /*@Get("sanitizeDB")
   async sanitizeDB() {
     this.appService.sanitizeDB();
-  }
+  }*/
 
   
 }

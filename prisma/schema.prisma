@@ -17,7 +17,7 @@ datasource db {
 model ListeItemsLinks {
   id          Int         @id @default(autoincrement())
   nameFr      String?
-  url         String?
+  url         String?     @unique
   type        String?
   nameEn      String?
   nameEs      String?
