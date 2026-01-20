@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "binary"
 }
 
@@ -15,20 +15,195 @@ datasource db {
 }
 
 model ListeItemsLinks {
-  id          Int         @id @default(autoincrement())
-  nameFr      String?
-  url         String?     @unique
-  type        String?
-  nameEn      String?
-  nameEs      String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id        Int      @id @default(autoincrement())
+  nameFr    String?
+  url       String?  @unique
+  type      String?
+  nameEn    String?
+  nameEs    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model SaveATScraping {
-  id          Int         @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   urlStopedAt String
-  pageNumber  Int?      
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  pageNumber  Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Rarity {
+  INHABITUEL
+  RARE
+  EPIQUE
+  RELIQUE
+  SOUVENIR
+  LEGENDAIRE
+  MYTHIQUE
+}
+
+enum MetaType {
+  MONSTRES
+  ARMURES
+  ARMES
+  FAMILIERS
+  PERSONNALISATION
+  ACCESSOIRES
+  CONSOMMABLE
+  RESSOURCES
+  MONTURES
+  DIVERS
+}
+
+enum ItemType {
+  CASQUE
+  AMULETTE
+  PLASTRON
+  ANNEAU
+  BOTTES
+  CAPE
+  EPAULETTES
+  CEINTURE
+
+  ARME_1_MAIN
+  ARME_2_MAINS
+  SECONDE_MAIN
+
+  FAMILIER
+  ACCESSOIRE
+  EMBLEME
+
+  AMELIORATION
+  FRAGMENT
+  KAMAS
+  RECETTE
+  RESSOURCE
+  RESSOURCE_MONSTRE
+  SIOUPIERE_GLOU
+  TRANSMUTATION
+  ENCHANTEMENT
+  PARCHEMIN_SUBLIMATION
+
+  ANIMATION
+  COSTUME
+  TITRE
+  TRANSFORMATION
+  ARTIFICE
+  ATTITUDE
+
+  MONTURE
+  CONSOMMABLE
+  NOURRITURE
+}
+
+// There are to many for a enum (CF le schema du model de la DB) 
+model Stat {
+  id    Int    @id @default(autoincrement())
+  code  String @unique // ex: PDV, PA, MAITRISE_EAU
+  label String
+
+  itemStats    ItemStat[]
+  monsterStats MonsterStat[]
+}
+
+model Item {
+  id       Int     @id @default(autoincrement())
+  wakfuId  Int?    @unique
+  name     String
+  level    Int?
+  iconPath String?
+
+  rarity   Rarity
+  metaType MetaType
+  type     ItemType
+
+  description String?
+
+  stats          ItemStat[]
+  monsterDrops   MonsterDrop[]
+  monsterHarvest MonsterHarvest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ItemStat {
+  id     Int @id @default(autoincrement())
+  itemId Int
+  statId Int
+  value  Int
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  stat Stat @relation(fields: [statId], references: [id])
+
+  @@unique([itemId, statId])
+}
+
+model MonsterFamily {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  monsters Monster[]
+}
+
+//TODO add Zone
+model Monster {
+  id       Int     @id @default(autoincrement())
+  wakfuId  Int?    @unique
+  name     String
+  iconPath String?
+
+  levelMin Int?
+  levelMax Int?
+
+  capturable Boolean @default(false)
+
+  familyId Int?
+  family   MonsterFamily? @relation(fields: [familyId], references: [id])
+
+  stats    MonsterStat[]
+  drops    MonsterDrop[]
+  recoltes MonsterHarvest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MonsterStat {
+  id        Int @id @default(autoincrement())
+  monsterId Int
+  statId    Int
+  value     Int
+
+  monster Monster @relation(fields: [monsterId], references: [id], onDelete: Cascade)
+  stat    Stat    @relation(fields: [statId], references: [id])
+
+  @@unique([monsterId, statId])
+}
+
+model MonsterDrop {
+  id        Int @id @default(autoincrement())
+  monsterId Int
+  itemId    Int
+
+  dropRate Float? // %
+  minQty   Int?   @default(1)
+  maxQty   Int?   @default(1)
+
+  monster Monster @relation(fields: [monsterId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id])
+
+  @@unique([monsterId, itemId])
+}
+
+model MonsterHarvest {
+  id        Int @id @default(autoincrement())
+  monsterId Int
+  itemId    Int
+
+  monster Monster @relation(fields: [monsterId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id])
+
+  @@unique([monsterId, itemId])
 }
