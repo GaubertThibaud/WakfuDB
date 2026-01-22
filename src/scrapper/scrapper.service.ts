@@ -3,6 +3,8 @@ import fetch from "node-fetch";
 import * as cheerio from 'cheerio'
 import { MetricsAnalyse } from "./metricsAnalyse";
 import { PrismaService } from "../prisma/prisma.service";
+import { ListeItemsLinks } from "src/prisma/scrapperLogic/listeItemsLinks.service";
+import { SaveATScraping } from "src/prisma/scrapperLogic/saveAtScraping.service";
 
 export class ScrapperService {
     private userAgent: string;
@@ -11,6 +13,8 @@ export class ScrapperService {
     private retryDelayMs: number;
     private metricsAnalyse: MetricsAnalyse; 
     private prismaService: PrismaService;
+    private listeItemsLinks: ListeItemsLinks;
+    private saveAtScraping: SaveATScraping;
 
     constructor() {
         this.userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
@@ -19,6 +23,8 @@ export class ScrapperService {
         this.maxRetries = 3;
         this.retryDelayMs = 2000;
         this.prismaService = new PrismaService();
+        this.listeItemsLinks = new ListeItemsLinks(this.prismaService);
+        this.saveAtScraping = new SaveATScraping(this.prismaService);
     }
 
     private async httpRequest(url: string, attempt = 1) { 
@@ -117,7 +123,7 @@ export class ScrapperService {
                 }
                 const name = this.getItemNameFromUrl(link).toLocaleLowerCase();
 
-                this.prismaService.createListeItemsLinks({
+                this.listeItemsLinks.createListeItemsLinks({
                     nameFr: name,
                     url: link,
                     type: type
@@ -146,7 +152,7 @@ export class ScrapperService {
             pageNumber ++;
         };
  
-        this.prismaService.saveScrapingState(urlInit + '/' + pageType + '?page=' + pageNumber, pageNumber);
+        this.saveAtScraping.saveScrapingState(urlInit + '/' + pageType + '?page=' + pageNumber, pageNumber);
         return wentThroughAll;
     }
 
