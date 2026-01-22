@@ -3,8 +3,8 @@ import fetch from "node-fetch";
 import * as cheerio from 'cheerio'
 import { MetricsAnalyse } from "./metricsAnalyse";
 import { PrismaService } from "../prisma/prisma.service";
-import { ListeItemsLinks } from "src/prisma/scrapperLogic/listeItemsLinks.service";
-import { SaveATScraping } from "src/prisma/scrapperLogic/saveAtScraping.service";
+import { ListeItemsLinks } from "src/scrapper/scrapperDbLogic/listeItemsLinks.service";
+import { SaveATScraping } from "src/scrapper/scrapperDbLogic/saveAtScraping.service";
 
 export class ScrapperService {
     private userAgent: string;
