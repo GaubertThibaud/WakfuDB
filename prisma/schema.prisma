@@ -165,9 +165,28 @@ model Monster {
   stats    MonsterStat[]
   drops    MonsterDrop[]
   recoltes MonsterHarvest[]
+  sorts    MonsterSpell[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Spell {
+  id     Int            @id @default(autoincrement())
+  name   String
+
+  monsters MonsterSpell[]
+}
+
+model MonsterSpell {
+  id        Int     @id @default(autoincrement())
+  monster   Monster @relation(fields: [monsterId], references: [id])
+  monsterId Int
+
+  spell     Spell   @relation(fields: [spellId], references: [id])
+  spellId   Int
+
+  spellLevel Int?
 }
 
 model MonsterStat {
