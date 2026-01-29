@@ -1,9 +1,9 @@
 import { SessionCookies } from "./sessionCookies" 
 import fetch from "node-fetch";
 import * as cheerio from 'cheerio'
-import { MetricsAnalyse } from "./metricsAnalyse";
+import { CFDecision, MetricsAnalyse } from "./metricsAnalyse";
 import { PrismaService } from "../prisma/prisma.service";
-import { ListeItemsLinks } from "src/scrapper/scrapperDbLogic/listeItemsLinks.service";
+import { ListeItemsLinksService } from "src/scrapper/scrapperDbLogic/listeItemsLinks.service";
 import { SaveATScraping } from "src/scrapper/scrapperDbLogic/saveAtScraping.service";
 
 export class ScrapperService {
@@ -13,7 +13,7 @@ export class ScrapperService {
     private retryDelayMs: number;
     private metricsAnalyse: MetricsAnalyse; 
     private prismaService: PrismaService;
-    private listeItemsLinks: ListeItemsLinks;
+    private listeItemsLinks: ListeItemsLinksService;
     private saveAtScraping: SaveATScraping;
 
     constructor() {
@@ -23,7 +23,7 @@ export class ScrapperService {
         this.maxRetries = 3;
         this.retryDelayMs = 2000;
         this.prismaService = new PrismaService();
-        this.listeItemsLinks = new ListeItemsLinks(this.prismaService);
+        this.listeItemsLinks = new ListeItemsLinksService(this.prismaService);
         this.saveAtScraping = new SaveATScraping(this.prismaService);
     }
 
@@ -59,6 +59,52 @@ export class ScrapperService {
             throw err
         }
     }
+
+    //Initialize the scraping (land on the main page to avoid cloudflare issues)
+    public async scrapperInit() { 
+        const urlInit = process.env.BASE_URL + '/fr/mmorpg/encyclopedie';
+        let tries = 0;
+
+        while(tries < 4) {
+            const resInit = await this.httpRequest(urlInit);
+            if(resInit.status == 200) {
+                console.log("Initialization Successfull !");
+                return;
+            } 
+            tries ++;
+            await this.sleep(1000);
+        }
+        throw new Error("Fail to Initialize the Scrapper connection");
+    }
+
+    public async scrapperRunner(decision: CFDecision, url: string) {
+        switch (decision) {
+            case 'OK':
+            this.metricsAnalyse.speedUp();
+            break;
+
+        case 'SLOW_DOWN':
+            this.metricsAnalyse.slowDown();
+            break;
+
+        case 'BACKOFF':
+            this.metricsAnalyse.slowDown();
+            await this.sleep(30000);
+            break;
+
+        case 'BLOCKED':
+            this.metricsAnalyse.reset();
+            throw new Error("Blocked by cloudflair, rip", { cause: "Blocked"});
+        }
+        const delay = this.metricsAnalyse.getDelayMs();
+        await this.sleep(delay);
+        const res = await this.httpRequest(url);
+        const newDecision = this.metricsAnalyse.analyze(res);
+
+        return { res, newDecision };
+    }
+
+
 
     //Logique du script de scrapping
     public async scrapperPagesList(pageType: string) {
@@ -237,7 +283,14 @@ export class ScrapperService {
     }
 
     /** Pause */
-    private sleep(ms: number) {
+    public sleep(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    public async simpleTextToHtml(text: string) {
+        if (text.includes('cf-challenge')) {
+            throw new Error("We are getting challenged !", { cause: "challenge" });
+        }
+        return cheerio.load(text);
     }
 }

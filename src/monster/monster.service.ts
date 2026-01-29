@@ -30,7 +30,8 @@ export class MonsterService {
         family: true,
         stats: { include: { stat: true } },
         drops: { include: { item: true } },
-        recoltes: { include: { item: true } },
+        harvest: { include: { item: true } },
+        spell: { include: { spell: true } },
       },
     });
   }

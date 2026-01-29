@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ScrapperService } from './scrapper/scrapper.service';
 import { PrismaService } from './prisma/prisma.service';
+import { MonsterService } from './monster/monster.service';
 
 // Categorie not used : compagnons / classes / metiers
 export const CATEGORIES_FR = [
@@ -20,6 +21,9 @@ export const CATEGORIES_FR = [
 export class AppService {
     getHello(): string {
         return 'Hello World!';
+
+        const monsterService = new MonsterService(new PrismaService());
+        monsterService.create({name:"test", })
     }
 
     async startScraperList(category: string) {

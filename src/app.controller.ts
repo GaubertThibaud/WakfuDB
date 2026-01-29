@@ -1,5 +1,6 @@
 import { BadRequestException, Controller, Get, Query} from '@nestjs/common';
 import { AppService, CATEGORIES_FR } from './app.service';
+import { ScraperController } from './scrapper/scrapper.controller';
 
 @Controller()
 export class AppController {
@@ -24,6 +25,13 @@ export class AppController {
     }
     return this.appService.startScraperList(category); 
   }
+
+
+  @Get("startScraperPage")
+  async startScraperPage(@Query("category") category: string): Promise<void> {
+    new ScraperController().scrapPageCategory(category);
+  }
+
 
   //unCommenting this endpoint if need be (but with the add of the @unique on the DB field should not happend again)
   /*@Get("sanitizeDB")

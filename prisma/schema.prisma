@@ -164,8 +164,8 @@ model Monster {
 
   stats    MonsterStat[]
   drops    MonsterDrop[]
-  recoltes MonsterHarvest[]
-  sorts    MonsterSpell[]
+  harvest  MonsterHarvest[]
+  spell    MonsterSpell[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
