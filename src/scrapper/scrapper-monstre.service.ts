@@ -183,11 +183,11 @@ export class ScrapperMonsterService {
 
                 const values = $(el)
                     .find('.ak-title span')
+                    .filter((_, span) => $(span).text().includes('%'))
                     .map((_, span) =>
-                    Number($(span).text().replace('%', '').trim())
+                        Number($(span).text().replace('%', '').trim())
                     )
                     .get();
-
                 if (values.length < 2) return;
 
                 const [mastery, resistance] = values;

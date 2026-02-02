@@ -28,6 +28,10 @@ export class MapperStats {
     public mapStatKey(value: string): string | null {
         const normalized = this.normalize(value);
 
+        if (normalized === "points d'action") {
+            return "PA"
+        }
+
         if (this.codeSet.has(normalized)) {
             return value.toUpperCase();
         }
