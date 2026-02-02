@@ -43,6 +43,7 @@ enum Rarity {
   MYTHIQUE
 }
 
+//check link between type and metatype in src/scrapper/mapper/metaType-mapper.ts
 enum MetaType {
   MONSTRES
   ARMURES
@@ -91,10 +92,15 @@ enum ItemType {
   TRANSFORMATION
   ARTIFICE
   ATTITUDE
+  AURA
 
   MONTURE
   CONSOMMABLE
   NOURRITURE
+
+  LIVRE
+  POCHETTE
+  CLEF
 }
 
 // There are to many for a enum (CF le schema du model de la DB) 
