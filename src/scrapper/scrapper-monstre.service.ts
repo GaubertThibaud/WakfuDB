@@ -3,23 +3,79 @@ import { ScrapperService } from "./scrapper.service";
 import { CFDecision } from "./metricsAnalyse";
 import { CheerioAPI } from "cheerio";
 import { mapRarity } from "./mapper/rarity-mapper";
-import { getMetaTypeFromType, isValidMetaType } from "./mapper/metaType-mapper";
+import { isValidMetaType } from "./mapper/metaType-mapper";
 import { MapperStats } from "./mapper/stat-mapper";
+import { MonsterFamilyService } from "src/monster/monster-family/monster-family.service";
+import { PrismaService } from "../prisma/prisma.service";
+import { MonsterService } from "src/monster/monster.service";
+import { MonsterStatService } from "src/monster/monster-stat/monster-stat.service";
+import { MonsterSpellService } from "src/monster/monster-spell.service.ts/monster-spell.service";
+import { SpellService } from "src/spells/spell.service";
+import { ItemService } from "src/items/item.service";
+import { ItemType, MetaType, MonsterFamily, Rarity } from "@prisma/client";
+import { MonsterDropService } from "src/monster/monster-drop/monster-drop.service";
+import { MonsterHarvestService } from "src/monster/monster-harvest/monster-harvest.service";
 
 interface HarvestItem {
     name: string;
     urlIcon: string;
-    level: string;
-    trapperLevel: string; 
+    level: number;
+    trapperLevel: number; 
+}
+
+interface Drop {
+    wakfuId: number,
+    metaType: MetaType,
+    name: string,
+    level: number,
+    rarity: Rarity,
+    dropRate: number,
+    quantity: number,
+    iconPath: string,
+    itemUrl: string,
+}
+
+interface Monster {
+    name: string;
+    familly: string;
+    urlIcon: string | null;
+    lvlMax: number | null;
+    lvlMin: number | null;
+    stats: {
+        [x: string]: number;
+    };
+    catchable: boolean;
+    drops: Drop[];
+    spells: string[];
+    harvest: HarvestItem[];
+    wakfuId: number;
 }
 
 export class ScrapperMonsterService {
     private scrapperService: ScrapperService;
     private mapperStat: MapperStats;
+    private prismaService: PrismaService;
+    private monsterFamilyService: MonsterFamilyService;
+    private monsterService: MonsterService;
+    private monsterStatService: MonsterStatService;
+    private monsterSpellService: MonsterSpellService;
+    private spellService: SpellService;
+    private itemService: ItemService;
+    private monsterDropService: MonsterDropService;
+    private monsterHarvestService: MonsterHarvestService;
 
     private constructor(scrapperService: ScrapperService, mapperStat: MapperStats) {
         this.scrapperService = scrapperService
         this.mapperStat = mapperStat
+        this.prismaService = new PrismaService();
+        this.monsterFamilyService = new MonsterFamilyService(this.prismaService);
+        this.monsterService = new MonsterService(this.prismaService);
+        this.monsterStatService = new MonsterStatService(this.prismaService);
+        this.monsterSpellService = new MonsterSpellService(this.prismaService);
+        this.spellService = new SpellService(this.prismaService);
+        this.itemService = new ItemService(this.prismaService);
+        this.monsterDropService = new MonsterDropService(this.prismaService);
+        this.monsterHarvestService = new MonsterHarvestService(this.prismaService);
     }
 
     public static async create() {
@@ -27,10 +83,6 @@ export class ScrapperMonsterService {
         const mapperStat = await MapperStats.create();
 
         return new ScrapperMonsterService(scrapperService, mapperStat);
-    }
-
-    public test() { 
-        console.log(this.mapperStat.listStats);
     }
 
     public async main(listeUrlCategory: ListeItemsLinks[]) {
@@ -41,14 +93,15 @@ export class ScrapperMonsterService {
             console.log("Exiting scrapping due to fail of initialization");
             return
         }
-        
-        let i = 0;
 
         let decision: CFDecision = "OK";
         for(const urlCategory of listeUrlCategory) {
-            i ++;
             //TODO check why url can still be null for some reason
             if(!urlCategory.url) {
+                continue;
+            }
+
+            if(!urlCategory.nameFr) {
                 continue;
             }
 
@@ -67,8 +120,13 @@ export class ScrapperMonsterService {
             const drops = this.getDrops(text);
             const spells = this.getSpells(text);
             const harvest = this.getHarvest(text);
+            const wakfuId = this.getWakfuId(urlCategory.url);
 
-            const monster = {
+            if (!wakfuId) {
+                throw new Error("Something went wrong while parsine the monster WakfuId");
+            }
+
+            const monster: Monster = {
                 name: urlCategory.nameFr,
                 familly: familly,
                 urlIcon: urlIcon,
@@ -79,15 +137,102 @@ export class ScrapperMonsterService {
                 drops: drops,
                 spells: spells,
                 harvest: harvest,
+                wakfuId: wakfuId,
             }
 
-            console.log(monster);
+            const newMonster = await this.insertNewMonster(monster);
 
-            if ( i > 5) {
-                return;
-            }
-            //return;
         }
+    }
+
+    private async insertNewMonster(monster: Monster) {
+        let monsterFamilyId: number | undefined;
+
+        if(monster.familly){
+            const monsterFamily = await this.monsterFamilyService.findOrCreate(monster.familly);
+            monsterFamilyId = monsterFamily.id;
+        }
+        
+        const newMonster = await this.monsterService.upsertByName({
+            wakfuId: monster.wakfuId,
+            name: monster.name,
+            iconPath: monster.urlIcon || undefined,
+            levelMax: monster.lvlMax || undefined,
+            levelMin: monster.lvlMin || undefined,
+            capturable: monster.catchable,
+            familyId: monsterFamilyId
+        });
+
+        Object.entries(monster.stats).forEach(([statName, statValue]) => {
+            const listStats = this.mapperStat.listStats;
+            const stat = listStats.find(s => s.code === statName || s.label === statName);
+
+            if (stat) {
+                this.monsterStatService.setStat(newMonster.id, stat.id, statValue);
+            } else {
+                console.warn(`Stat inconnue: ${statName}`);
+            }
+        });
+
+        for (const spell in monster.spells) {
+            const newSpell = await this.spellService.upsert(spell);
+
+            this.monsterSpellService.addSpellToMonster({
+                monsterId: newMonster.id,
+                spellId: newSpell.id,
+                spellLevel: 200
+            })
+        };
+
+        for (const drop of monster.drops) {
+            //There are edge case where they have blanc items
+            if (!drop.name) {
+                continue;
+            }
+            
+            let metaType: MetaType = MetaType.DIVERS;
+            if(drop.metaType) {
+                metaType = drop.metaType;
+            }
+            const item = await this.itemService.upsertByName({
+                wakfuId: drop.wakfuId,
+                name: drop.name,
+                level: drop.level,
+                iconPath: drop.iconPath,
+                rarity: drop.rarity,
+                metaType: metaType,
+                type: ItemType.TBD,
+                description: undefined,
+            })
+
+            await this.monsterDropService.upsertDrop(newMonster.id, item.id, drop.dropRate, drop.quantity);
+        }
+
+        for (const harvest of monster.harvest) {
+            const wakfuId = this.getWakfuId(harvest.urlIcon);
+
+            const item = await this.itemService.upsertByName({
+                wakfuId: wakfuId || undefined,
+                name: harvest.name,
+                level: harvest.level,
+                iconPath: harvest.urlIcon,
+                rarity: Rarity.COMMUN,
+                metaType: MetaType.RESSOURCES,
+                type: ItemType.TBD,
+                description: undefined,
+            })
+
+            await this.monsterHarvestService.addHarvest(newMonster.id, item.id);
+        }
+
+        return newMonster;
+    }   
+
+
+    private getWakfuId(url: string): number | null {
+        const match = url.match(/\/(\d+)-/);
+        //returning ID as 0 if there aren't any but should never happen but easy flag in the DB
+        return match ? Number(match[1]) : null;
     }
 
     private getFamilly($: CheerioAPI) {
@@ -108,7 +253,10 @@ export class ScrapperMonsterService {
         return image;
     }
 
-    private getLvl($: CheerioAPI) {
+    private getLvl($: CheerioAPI): {
+        lvlMin: number | null;
+        lvlMax: number | null;
+    } {
         const text = $('.ak-encyclo-detail-level').text().trim();
 
         const numbers = text.match(/\d+/g)?.map(Number) ?? [];
@@ -127,7 +275,7 @@ export class ScrapperMonsterService {
         return { lvlMin, lvlMax };
     }
     
-    private getStats($: CheerioAPI) {
+    private getStats($: CheerioAPI): Record<string, number> {
         const carac = this.getCharacteristics($);
         const res = this.getResistance($);
         return { ...carac, ...res };
@@ -296,10 +444,10 @@ export class ScrapperMonsterService {
             const urlIcon = $(el).find('.ak-image img').attr('src')?.trim() || '';
 
             // Niveau affiché à droite (ak-aside)
-            const level = $(el).find('.ak-aside').text().trim();
+            const level = Number($(el).find('.ak-aside').text().trim().split("Niv. ")[1]);
 
             // Niveau Trappeur dans ak-text (tres moche mais ca fonctionne)
-            const trapperLevel = $(el).find('.ak-text span').text().trim().split("Niveau ")[1];
+            const trapperLevel = Number($(el).find('.ak-text span').text().trim().split("Niveau ")[1]);
 
             if (name) {
                 harvests.push({ name, urlIcon, level, trapperLevel });

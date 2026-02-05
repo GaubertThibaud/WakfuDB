@@ -48,4 +48,27 @@ export class MonsterService {
       where: { id },
     });
   }
+
+  upsertByName(dto: CreateMonsterDto) {
+    return this.prisma.monster.upsert({
+      where: { name: dto.name },
+      update: {
+        wakfuId: dto.wakfuId,
+        levelMin: dto.levelMin,
+        levelMax: dto.levelMax,
+        iconPath: dto.iconPath,
+        capturable: dto.capturable,
+        familyId: dto.familyId,
+      },
+      create: {
+        name: dto.name,
+        wakfuId: dto.wakfuId,
+        levelMin: dto.levelMin,
+        levelMax: dto.levelMax,
+        iconPath: dto.iconPath,
+        capturable: dto.capturable,
+        familyId: dto.familyId,
+      },
+    });
+  }
 }

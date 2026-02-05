@@ -46,7 +46,8 @@ const typeToMetaTypeMap: Record<ItemType | "MONSTRE", MetaType> = {
   POCHETTE: 'DIVERS',
   CLEF: 'DIVERS',
 
-  MONSTRE: "MONSTRES"
+  MONSTRE: "MONSTRES",
+  TBD: "DIVERS",
 };
 
 export function getMetaTypeFromType(itemType: ItemType): MetaType | null {

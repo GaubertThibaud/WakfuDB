@@ -48,4 +48,39 @@ export class ItemService {
       where: { id },
     });
   }
+
+  async upsertByName(data: {
+    name: string;
+    wakfuId?: number;
+    level?: number;
+    iconPath?: string;
+    rarity: string;
+    metaType: string;
+    type: string;
+    description?: string;
+  }) {
+    return this.prisma.item.upsert({
+      where: { name: data.name },
+      update: {
+        wakfuId: data.wakfuId,
+        level: data.level,
+        iconPath: data.iconPath,
+        rarity: data.rarity as any,
+        metaType: data.metaType as any,
+        type: data.type as any,
+        description: data.description,
+      },
+      create: {
+        name: data.name,
+        wakfuId: data.wakfuId,
+        level: data.level,
+        iconPath: data.iconPath,
+        rarity: data.rarity as any,
+        metaType: data.metaType as any,
+        type: data.type as any,
+        description: data.description,
+      },
+    });
+  }
+
 }

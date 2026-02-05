@@ -34,6 +34,7 @@ model SaveATScraping {
 }
 
 enum Rarity {
+  COMMUN
   INHABITUEL
   RARE
   EPIQUE
@@ -101,13 +102,15 @@ enum ItemType {
   LIVRE
   POCHETTE
   CLEF
+
+  TBD
 }
 
 // There are to many for a enum (CF le schema du model de la DB) 
 model Stat {
   id    Int    @id @default(autoincrement())
   code  String @unique // ex: PDV, PA, MAITRISE_EAU
-  label String
+  label String @unique
 
   itemStats    ItemStat[]
   monsterStats MonsterStat[]
@@ -116,7 +119,7 @@ model Stat {
 model Item {
   id       Int     @id @default(autoincrement())
   wakfuId  Int?    @unique
-  name     String
+  name     String  @unique
   level    Int?
   iconPath String?
 
@@ -157,7 +160,7 @@ model MonsterFamily {
 model Monster {
   id       Int     @id @default(autoincrement())
   wakfuId  Int?    @unique
-  name     String
+  name     String  @unique
   iconPath String?
 
   levelMin Int?
@@ -178,8 +181,8 @@ model Monster {
 }
 
 model Spell {
-  id     Int            @id @default(autoincrement())
-  name   String
+  id     Int        @id @default(autoincrement())
+  name   String     @unique
 
   monsters MonsterSpell[]
 }
