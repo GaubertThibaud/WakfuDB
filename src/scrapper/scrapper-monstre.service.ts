@@ -85,6 +85,28 @@ export class ScrapperMonsterService {
         return new ScrapperMonsterService(scrapperService, mapperStat);
     }
 
+    //verify in DB that all the monster are succefully in
+    public async verifyScrapping(listeUrlCategory: ListeItemsLinks[]) {
+        for(const urlCategory of listeUrlCategory) {
+            //TODO check why url can still be null for some reason
+            if(!urlCategory.url) {
+                continue;
+            }
+
+            if(!urlCategory.nameFr) {
+                continue;
+            }
+
+            const monster = await this.monsterService.findByName(urlCategory.nameFr);
+
+            if(!monster) { 
+                console.warn("Monster Missing : " + urlCategory.url);
+            } 
+        }
+
+        console.log(" FINISH !");
+    }
+
     public async main(listeUrlCategory: ListeItemsLinks[]) {
         //Initialisation of the scrapper
         try {
@@ -143,6 +165,8 @@ export class ScrapperMonsterService {
             const newMonster = await this.insertNewMonster(monster);
 
         }
+
+        console.log(" FINISH !");
     }
 
     private async insertNewMonster(monster: Monster) {

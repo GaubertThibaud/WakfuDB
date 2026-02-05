@@ -36,6 +36,19 @@ export class MonsterService {
     });
   }
 
+  findByName(name: string) {
+    return this.prisma.monster.findUnique({
+      where: { name: name },
+      include: {
+        family: true,
+        stats: { include: { stat: true } },
+        drops: { include: { item: true } },
+        harvest: { include: { item: true } },
+        spell: { include: { spell: true } },
+      },
+    });
+  }
+
   update(id: number, dto: UpdateMonsterDto) {
     return this.prisma.monster.update({
       where: { id },

@@ -29,8 +29,8 @@ export class ScraperController {
         switch (type) {
             case "monstres":
                 const scrapperMonsterService = await ScrapperMonsterService.create();
-                //scrapperMonsterService.test();
-                scrapperMonsterService.main(listeUrlCategory);
+                scrapperMonsterService.verifyScrapping(listeUrlCategory);
+                //scrapperMonsterService.main(listeUrlCategory);
                 break;
             default:
                 
