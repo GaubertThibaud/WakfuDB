@@ -57,3 +57,9 @@ export function getMetaTypeFromType(itemType: ItemType): MetaType | null {
 export function isValidMetaType(value: string): value is MetaType {
   return Object.values(MetaType).includes(value as MetaType);
 }
+
+export function getTypesFromMetaType(metaType: string): ItemType[] {
+  return Object.entries(typeToMetaTypeMap)
+    .filter(([, mType]) => mType === metaType)
+    .map(([type]) => type as ItemType)
+}

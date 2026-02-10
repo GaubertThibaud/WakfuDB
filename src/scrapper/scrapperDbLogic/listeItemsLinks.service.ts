@@ -28,4 +28,14 @@ export class ListeItemsLinksService {
     public async getlisteType() {
         return this.prisma.listeItemsLinks.groupBy({by: ['type']});
     }
+
+    public async getlisteItemsLinksFromTypes(types: string[]) {
+        return this.prisma.listeItemsLinks.findMany({
+            where: {
+                type: {
+                    in: types
+                }
+            }
+        })
+    }
 }
