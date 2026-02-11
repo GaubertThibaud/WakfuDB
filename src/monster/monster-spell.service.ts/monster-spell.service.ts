@@ -8,8 +8,17 @@ export class MonsterSpellService {
 
   // Ajouter un sort à un monstre
   async addSpellToMonster(data: CreateMonsterSpellDto) {
-    return this.prisma.monsterSpell.create({
-      data: {
+    return this.prisma.monsterSpell.upsert({
+      where: {
+        monsterId_spellId: {
+          monsterId: data.monsterId,
+          spellId: data.spellId,
+        },
+      },
+      update: {
+        spellLevel: data.spellLevel ?? 1,
+      },
+      create: {
         monsterId: data.monsterId,
         spellId: data.spellId,
         spellLevel: data.spellLevel ?? 1,

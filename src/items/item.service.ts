@@ -49,9 +49,9 @@ export class ItemService {
     });
   }
 
-  async upsertByName(data: {
+  async upsertByWakfuId(data: {
     name: string;
-    wakfuId?: number;
+    wakfuId: number;
     level?: number;
     iconPath?: string;
     rarity: string;
@@ -60,7 +60,7 @@ export class ItemService {
     description?: string;
   }) {
     return this.prisma.item.upsert({
-      where: { name: data.name },
+      where: { wakfuId: data.wakfuId },
       update: {
         wakfuId: data.wakfuId,
         level: data.level,

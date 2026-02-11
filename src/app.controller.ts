@@ -1,6 +1,8 @@
 import { BadRequestException, Controller, Get, Query} from '@nestjs/common';
 import { AppService, CATEGORIES_FR } from './app.service';
 import { ScraperController } from './scrapper/scrapper.controller';
+import { MonsterService } from './monster/monster.service';
+import { PrismaService } from './prisma/prisma.service';
 
 @Controller()
 export class AppController {
@@ -30,6 +32,15 @@ export class AppController {
   @Get("startScraperPage")
   async startScraperPage(@Query("category") category: string): Promise<void> {
     new ScraperController().scrapPageCategory(category);
+  }
+
+  @Get("test")
+  async test() { 
+    const monsterService = new MonsterService(new PrismaService());
+    const test = await monsterService.findByName("chapo magik");
+    const test2 = await monsterService.findByName("chapo magik");
+    const test3 = await monsterService.findByName("chapo magik");
+    console.log(test, test2, test3);
   }
 
 

@@ -21,6 +21,7 @@ interface HarvestItem {
     urlIcon: string;
     level: number;
     trapperLevel: number; 
+    href: string;
 }
 
 interface Drop {
@@ -162,8 +163,11 @@ export class ScrapperMonsterService {
                 wakfuId: wakfuId,
             }
 
+            console.log(monster);
+
             const newMonster = await this.insertNewMonster(monster);
 
+            console.log(newMonster);
         }
 
         console.log(" FINISH !");
@@ -187,16 +191,23 @@ export class ScrapperMonsterService {
             familyId: monsterFamilyId
         });
 
-        Object.entries(monster.stats).forEach(([statName, statValue]) => {
+        for (const [statName, statValue] of Object.entries(monster.stats)) {
             const listStats = this.mapperStat.listStats;
-            const stat = listStats.find(s => s.code === statName || s.label === statName);
+            const stat = listStats.find(
+                s => s.code === statName || s.label === statName
+            );
 
             if (stat) {
-                this.monsterStatService.setStat(newMonster.id, stat.id, statValue);
+                await this.monsterStatService.setStat(
+                    newMonster.id,
+                    stat.id,
+                    statValue
+                );
             } else {
+                //Mostlikely the Eau Terre Feu Air sur la page
                 console.warn(`Stat inconnue: ${statName}`);
             }
-        });
+        }
 
         for (const spell in monster.spells) {
             const newSpell = await this.spellService.upsert(spell);
@@ -218,7 +229,7 @@ export class ScrapperMonsterService {
             if(drop.metaType) {
                 metaType = drop.metaType;
             }
-            const item = await this.itemService.upsertByName({
+            const item = await this.itemService.upsertByWakfuId({
                 wakfuId: drop.wakfuId,
                 name: drop.name,
                 level: drop.level,
@@ -233,10 +244,16 @@ export class ScrapperMonsterService {
         }
 
         for (const harvest of monster.harvest) {
-            const wakfuId = this.getWakfuId(harvest.urlIcon);
+            console.log(harvest);
+            const wakfuId = this.getWakfuId(harvest.href);
+            console.log(wakfuId);
 
-            const item = await this.itemService.upsertByName({
-                wakfuId: wakfuId || undefined,
+            if (!wakfuId) {
+                continue;
+            }
+
+            const item = await this.itemService.upsertByWakfuId({
+                wakfuId: wakfuId,
                 name: harvest.name,
                 level: harvest.level,
                 iconPath: harvest.urlIcon,
@@ -466,7 +483,9 @@ export class ScrapperMonsterService {
             const name = $(el).find('.ak-title .ak-linker').first().text().trim();
 
             const urlIcon = $(el).find('.ak-image img').attr('src')?.trim() || '';
-
+            
+            const href = $(el).find('a').attr('href')?.trim() || '';
+            
             // Niveau affiché à droite (ak-aside)
             const level = Number($(el).find('.ak-aside').text().trim().split("Niv. ")[1]);
 
@@ -474,7 +493,7 @@ export class ScrapperMonsterService {
             const trapperLevel = Number($(el).find('.ak-text span').text().trim().split("Niveau ")[1]);
 
             if (name) {
-                harvests.push({ name, urlIcon, level, trapperLevel });
+                harvests.push({ name, urlIcon, level, trapperLevel, href});
             }
         });
 

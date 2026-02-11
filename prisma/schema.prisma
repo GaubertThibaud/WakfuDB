@@ -119,7 +119,7 @@ model Stat {
 model Item {
   id       Int     @id @default(autoincrement())
   wakfuId  Int?    @unique
-  name     String  @unique
+  name     String  
   level    Int?
   iconPath String?
 
@@ -196,6 +196,8 @@ model MonsterSpell {
   spellId   Int
 
   spellLevel Int?
+
+  @@unique([monsterId, spellId])
 }
 
 model MonsterStat {

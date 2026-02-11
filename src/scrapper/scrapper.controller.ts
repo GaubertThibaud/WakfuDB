@@ -10,11 +10,9 @@ import { getTypesFromMetaType } from "./mapper/metaType-mapper";
 export class ScraperController {
     public async scrapPageCategory(metaType: string) {
         // TODO remove that debug ligne
-        //console.log(await new ListeItemsLinksService(new PrismaService()).getlisteType());
+        console.log(await new ListeItemsLinksService(new PrismaService()).getlisteType());
 
         const listeUrlCategory = await this.getListeUrlType(metaType);
-        // TODO remove that debug ligne
-        console.log(listeUrlCategory);
 
         await this.scrapPageRedirect(listeUrlCategory, metaType);
     }
@@ -28,11 +26,11 @@ export class ScraperController {
                 message: 'category is wrong !',
             });
         }
-        
+        console.log(typeList);
         return await new ListeItemsLinksService(new PrismaService()).getlisteItemsLinksFromTypes(typeList);
     }
 
-    //Most page are unique depending on the categorie
+    //Most page are unique depending on the categorie/metaType
     public async scrapPageRedirect(listeUrlCategory: ListeItemsLinks[], metaType: string) {
 
         console.log(metaType);
@@ -41,7 +39,7 @@ export class ScraperController {
             case "monstres":
                 const scrapperMonsterService = await ScrapperMonsterService.create();
                 await scrapperMonsterService.main(listeUrlCategory);
-                await scrapperMonsterService.verifyScrapping(listeUrlCategory);
+                //await scrapperMonsterService.verifyScrapping(listeUrlCategory);
                 break;
             case "armes":
                 const scrapperWeaponService = await ScrapperWeaponService.create();

@@ -1,6 +1,6 @@
 import { ItemType, MetaType } from "@prisma/client";
 
-const typeToMetaTypeMap: Record<ItemType | "MONSTRE", MetaType> = {
+const typeToMetaTypeMap: Record<ItemType | "MONSTRES", MetaType> = {
   CASQUE: 'ARMURES',
   AMULETTE: 'ARMURES',
   PLASTRON: 'ARMURES',
@@ -46,7 +46,7 @@ const typeToMetaTypeMap: Record<ItemType | "MONSTRE", MetaType> = {
   POCHETTE: 'DIVERS',
   CLEF: 'DIVERS',
 
-  MONSTRE: "MONSTRES",
+  MONSTRES: "MONSTRES",
   TBD: "DIVERS",
 };
 
