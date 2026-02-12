@@ -12,9 +12,10 @@ import { MonsterStatService } from "src/monster/monster-stat/monster-stat.servic
 import { MonsterSpellService } from "src/monster/monster-spell.service.ts/monster-spell.service";
 import { SpellService } from "src/spells/spell.service";
 import { ItemService } from "src/items/item.service";
-import { ItemType, MetaType, MonsterFamily, Rarity } from "@prisma/client";
+import { ItemType, MetaType, Rarity } from "@prisma/client";
 import { MonsterDropService } from "src/monster/monster-drop/monster-drop.service";
 import { MonsterHarvestService } from "src/monster/monster-harvest/monster-harvest.service";
+import { getLvl, getType, getUrlIcon, getWakfuId } from "./scrapper.helper";
 
 interface HarvestItem {
     name: string;
@@ -136,14 +137,14 @@ export class ScrapperMonsterService {
 
             //Exctrating all the values
             const familly = this.getFamilly(text);
-            const urlIcon = this.getUrlIcon(text);
-            const { lvlMin, lvlMax } = this.getLvl(text);
+            const urlIcon = getUrlIcon(text);
+            const { lvlMin, lvlMax } = getLvl(text);
             const stats = this.getStats(text);
             const catchable = this.isCatchable(text);
             const drops = this.getDrops(text);
             const spells = this.getSpells(text);
             const harvest = this.getHarvest(text);
-            const wakfuId = this.getWakfuId(urlCategory.url);
+            const wakfuId = getWakfuId(urlCategory.url);
 
             if (!wakfuId) {
                 throw new Error("Something went wrong while parsine the monster WakfuId");
@@ -245,7 +246,7 @@ export class ScrapperMonsterService {
 
         for (const harvest of monster.harvest) {
             console.log(harvest);
-            const wakfuId = this.getWakfuId(harvest.href);
+            const wakfuId = getWakfuId(harvest.href);
             console.log(wakfuId);
 
             if (!wakfuId) {
@@ -269,52 +270,11 @@ export class ScrapperMonsterService {
         return newMonster;
     }   
 
-
-    private getWakfuId(url: string): number | null {
-        const match = url.match(/\/(\d+)-/);
-        //returning ID as 0 if there aren't any but should never happen but easy flag in the DB
-        return match ? Number(match[1]) : null;
-    }
-
     private getFamilly($: CheerioAPI) {
-        return $('.ak-encyclo-detail-type span')
-            .first()
-            .text()
-            .trim();
+        return getType($);
     }
 
-    private getUrlIcon($: CheerioAPI) {
-        const img = $('.ak-encyclo-detail-illu img');
 
-        const imageUrl = img.attr('data-src') || img.attr('src') || null;
-        const image = imageUrl
-        ? new URL(imageUrl, 'https://static.ankama.com').href
-        : null;
-
-        return image;
-    }
-
-    private getLvl($: CheerioAPI): {
-        lvlMin: number | null;
-        lvlMax: number | null;
-    } {
-        const text = $('.ak-encyclo-detail-level').text().trim();
-
-        const numbers = text.match(/\d+/g)?.map(Number) ?? [];
-
-        let lvlMin: number | null = null;
-        let lvlMax: number | null = null;
-
-        if (numbers.length === 1) {
-            lvlMin = numbers[0];
-            lvlMax = numbers[0];
-        } else if (numbers.length >= 2) {
-            lvlMin = numbers[0];
-            lvlMax = numbers[1];
-        }
-
-        return { lvlMin, lvlMax };
-    }
     
     private getStats($: CheerioAPI): Record<string, number> {
         const carac = this.getCharacteristics($);
