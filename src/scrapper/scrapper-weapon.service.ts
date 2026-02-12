@@ -51,21 +51,12 @@ export class ScrapperWeaponService {
         }
     }
 
-    private getWakfuId() {
 
+    private getConditions() {
+        
     }
 
-    private getUrlIcon() {
+    private getStats() {
 
     }
-
-    private getLvl() {
-
-    }
-
-    private getType() {
-
-    }
-
-    
 }

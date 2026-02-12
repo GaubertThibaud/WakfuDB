@@ -44,6 +44,14 @@ enum Rarity {
   MYTHIQUE
 }
 
+enum ElementType {
+  FEU
+  EAU
+  AIR
+  TERRE
+  LUMIERE
+}
+
 //check link between type and metatype in src/scrapper/mapper/metaType-mapper.ts
 enum MetaType {
   MONSTRES
@@ -132,9 +140,21 @@ model Item {
   stats          ItemStat[]
   monsterDrops   MonsterDrop[]
   monsterHarvest MonsterHarvest[]
+  weaponDamages  WeaponDamage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model WeaponDamage {
+  id        Int @id @default(autoincrement())
+  itemId    Int
+  element   ElementType
+  min       Int
+  max       Int
+  isCrit    Boolean @default(false)
+
+  item Item @relation(fields: [itemId], references: [id])
 }
 
 model ItemStat {

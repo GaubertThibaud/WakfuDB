@@ -1,4 +1,4 @@
-import { seedStats } from "src/stats/stats.seed"
+import { seedStats } from "../stats/stats.seed"
 
 // Start the seeder
 async function main() {

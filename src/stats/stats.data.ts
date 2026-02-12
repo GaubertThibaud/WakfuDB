@@ -53,5 +53,10 @@ export const STATS = [
   { code: 'RESISTANCE_ELEMENT_ALEA_3', label: 'Résistance élémentaire aléatoire (3)' },
 
   { code: 'RESISTANCE_CRITIQUE', label: 'Résistance critique' },
-  { code: 'RESISTANCE_DOS', label: 'Résistance dos' }
+  { code: 'RESISTANCE_DOS', label: 'Résistance dos' },
+
+  { code: 'COUT_PA', label: 'Cout en points d’action' },
+  { code: 'COUT_PM', label: 'Cout en points de mouvement' },
+  { code: 'COUT_PDW', label: 'Cout en points de wakfu' },
+  { code: 'COUT_PO', label: 'Porté de l’utilisation' }
 ]
