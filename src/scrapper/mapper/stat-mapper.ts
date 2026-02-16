@@ -27,13 +27,34 @@ export class MapperStats {
 
     public mapStatKey(value: string): string | null {
         const normalized = this.normalize(value);
-
-        if (normalized === "points d'action") {
-            return "PA"
-        }
+        console.log("normalized : " + normalized);
 
         if (this.codeSet.has(normalized)) {
             return value.toUpperCase();
+        }
+
+        //Sadly we are scrapping a lot of data that aren't normalized
+        switch(normalized) {
+            case "points d'action":
+                return "PA";
+
+            case "portee":
+                return "PO";
+
+            case "pv":
+                return "PDV";
+
+            case "resistance":
+                return "RESISTANCE_ELEMENT";
+
+            case "maitrise sur 1 elements":
+                return "MAITRISE_ELEMENT_ALEA_1";
+
+            case "maitrise sur 2 elements":
+                return "MAITRISE_ELEMENT_ALEA_2";
+
+            case "maitrise sur 3 elements":
+                return "MAITRISE_ELEMENT_ALEA_3";
         }
 
         const key = this.labelToCode.get(normalized);
