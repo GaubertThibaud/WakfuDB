@@ -27,7 +27,6 @@ export class MapperStats {
 
     public mapStatKey(value: string): string | null {
         const normalized = this.normalize(value);
-        console.log("normalized : " + normalized);
 
         if (this.codeSet.has(normalized)) {
             return value.toUpperCase();

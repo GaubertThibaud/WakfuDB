@@ -49,6 +49,19 @@ export class MonsterService {
     });
   }
 
+  findByWakfuId(wakfuId: number) {
+    return this.prisma.monster.findUnique({
+      where: { wakfuId: wakfuId },
+      include: {
+        family: true,
+        stats: { include: { stat: true } },
+        drops: { include: { item: true } },
+        harvest: { include: { item: true } },
+        spell: { include: { spell: true } },
+      },
+    });
+  }
+
   update(id: number, dto: UpdateMonsterDto) {
     return this.prisma.monster.update({
       where: { id },

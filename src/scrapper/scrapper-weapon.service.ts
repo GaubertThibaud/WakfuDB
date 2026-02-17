@@ -6,6 +6,12 @@ import { CheerioAPI } from "cheerio";
 import { getDescription, getLvl, getRarete, getType, getUrlIcon, getWakfuId } from "./scrapper.helper";
 import { damageTypeMapper } from "./mapper/damageType-mapper";
 
+interface DropSource {
+  name: string;
+  wakfuId: number;
+  dropRate: number;
+}
+
 export class ScrapperWeaponService {
     private scrapperService: ScrapperService;
     private mapperStat: MapperStats;
@@ -38,7 +44,7 @@ export class ScrapperWeaponService {
         let decision: CFDecision = "OK";
         for(let urlCategory of listeUrlCategory) {
 
-            urlCategory.url = "/fr/mmorpg/encyclopedie/armes/32333-arc-freyrr";
+            //urlCategory.url = "/fr/mmorpg/encyclopedie/armes/32333-arc-freyrr";
 
             //TODO check why url can still be null for some reason
             if(!urlCategory.url) {
@@ -61,12 +67,12 @@ export class ScrapperWeaponService {
             const rarete = getRarete(text);
             const description = getDescription(text);
             const stats = this.getStatistics(text);
-            const dropFrom = "";
+            const dropFrom = this.getDropFrom(text);
             const recipeFor = "";
             const recipeFrom = "";
             
             console.log(urlCategory)
-            console.log(stats)
+            console.log(dropFrom);
 
             return
         }
@@ -80,6 +86,39 @@ export class ScrapperWeaponService {
             stat: this.getStat($),
         }
         return result;
+    }
+
+    private getDropFrom($: CheerioAPI): DropSource[] {
+        const drops: DropSource[] = [];
+
+        $('.ak-panel-title')
+            .filter((_, el) =>
+            $(el).text().replace(/\s+/g, ' ').trim() === 'Peut être obtenu sur'
+            )
+            .closest('.ak-panel')
+            .find('.ak-list-element')
+            .each((_, el) => {
+            const anchor = $(el).find('.ak-title a');
+
+            const name = anchor.find('.ak-linker').first().text().trim();
+
+            const href = anchor.attr('href');
+            const idMatch = href?.match(/monstres\/(\d+)-/);
+            const wakfuId = idMatch ? Number(idMatch[1]) : null;
+
+            const dropText = $(el).children('.ak-main')
+                .find('.ak-aside')
+                .first()
+                .text()
+                .trim();
+            const dropRate = Number(dropText.replace('%', ''));
+
+            if (name && wakfuId && !isNaN(dropRate)) {
+                drops.push({ name, wakfuId, dropRate });
+            }
+            });
+
+        return drops;
     }
 
     private getCout($: CheerioAPI): Record<string, number> {

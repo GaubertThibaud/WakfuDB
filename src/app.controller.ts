@@ -3,6 +3,7 @@ import { AppService, CATEGORIES_FR } from './app.service';
 import { ScraperController } from './scrapper/scrapper.controller';
 import { MonsterService } from './monster/monster.service';
 import { PrismaService } from './prisma/prisma.service';
+import { ItemService } from './items/item.service';
 
 @Controller()
 export class AppController {
@@ -37,10 +38,13 @@ export class AppController {
   @Get("test")
   async test() { 
     const monsterService = new MonsterService(new PrismaService());
-    const test = await monsterService.findByName("chapo magik");
-    const test2 = await monsterService.findByName("chapo magik");
-    const test3 = await monsterService.findByName("chapo magik");
-    console.log(test, test2, test3);
+    const itemService = new ItemService(new PrismaService());
+    const test1 = await itemService.findAllByName("Le Lumysceptre");
+    const test2 = await monsterService.findByWakfuId(5664);
+    const test3 = await itemService.findByWakfuId(32479);
+    console.dir(test1);
+    console.log(JSON.stringify(test2, null, 2));
+    console.dir(test3);
   }
 
 

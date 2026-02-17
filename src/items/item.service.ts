@@ -24,9 +24,28 @@ export class ItemService {
     });
   }
 
+  async findAllByName(name: string) {
+    return this.prisma.item.findMany({
+      where: {
+        name: name,
+      },
+      include: {
+        stats: { include: { stat: true } },
+        monsterDrops: { include: { monster: true } },
+        monsterHarvest: { include: { monster: true } },
+      },
+    });
+  }
+
+
   findByWakfuId(wakfuId: number) {
     return this.prisma.item.findUnique({
       where: { wakfuId },
+      include: {
+        stats: { include: { stat: true } },
+        monsterDrops: { include: { monster: true } },
+        monsterHarvest: { include: { monster: true } },
+      },
     });
   }
 
