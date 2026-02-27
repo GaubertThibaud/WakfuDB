@@ -3,29 +3,27 @@ import { MapperStats } from "./mapper/stat-mapper";
 import { ScrapperService } from "./scrapper.service";
 import { CFDecision } from "./metricsAnalyse";
 import { CheerioAPI } from "cheerio";
-import { getDescription, getLvl, getRarete, getType, getUrlIcon, getWakfuId } from "./scrapper.helper";
+import { getDescription, getDropFrom, getLvl, getRarete, getRecipesFor, getRecipesFrom, getType, getUrlIcon, getWakfuId } from "./scrapper.helper";
 import { damageTypeMapper } from "./mapper/damageType-mapper";
-
-interface DropSource {
-  name: string;
-  wakfuId: number;
-  dropRate: number;
-}
+import { MapperJob } from "./mapper/job-mapper";
 
 export class ScrapperWeaponService {
     private scrapperService: ScrapperService;
     private mapperStat: MapperStats;
+    private mapperJob: MapperJob;
 
-    private constructor(scrapperService: ScrapperService, mapperStat: MapperStats) {
+    private constructor(scrapperService: ScrapperService, mapperStat: MapperStats, mapperJob: MapperJob) {
         this.scrapperService = scrapperService
         this.mapperStat = mapperStat
+        this.mapperJob = mapperJob
     }
 
     public static async create() {
         const scrapperService = new ScrapperService();
         const mapperStat = await MapperStats.create();
+        const mapperJob = await MapperJob.create();
 
-        return new ScrapperWeaponService(scrapperService, mapperStat);
+        return new ScrapperWeaponService(scrapperService, mapperStat, mapperJob);
     }
 
     public async main(listeUrlCategory: ListeItemsLinks[]) {
@@ -44,7 +42,7 @@ export class ScrapperWeaponService {
         let decision: CFDecision = "OK";
         for(let urlCategory of listeUrlCategory) {
 
-            //urlCategory.url = "/fr/mmorpg/encyclopedie/armes/32333-arc-freyrr";
+            urlCategory.url = "/fr/mmorpg/encyclopedie/armes/32479-lumysceptre";
 
             //TODO check why url can still be null for some reason
             if(!urlCategory.url) {
@@ -67,17 +65,17 @@ export class ScrapperWeaponService {
             const rarete = getRarete(text);
             const description = getDescription(text);
             const stats = this.getStatistics(text);
-            const dropFrom = this.getDropFrom(text);
-            const recipeFor = "";
-            const recipeFrom = "";
+            const dropFrom = getDropFrom(text);
+            const recipeFor = getRecipesFor(text, this.mapperJob);
+            const recipeFrom = getRecipesFrom(text, this.mapperJob);
             
+
             console.log(urlCategory)
-            console.log(dropFrom);
+            console.log(recipeFrom);
 
             return
         }
     }
-
 
     private getStatistics($: CheerioAPI) {
         const result = {
@@ -86,39 +84,6 @@ export class ScrapperWeaponService {
             stat: this.getStat($),
         }
         return result;
-    }
-
-    private getDropFrom($: CheerioAPI): DropSource[] {
-        const drops: DropSource[] = [];
-
-        $('.ak-panel-title')
-            .filter((_, el) =>
-            $(el).text().replace(/\s+/g, ' ').trim() === 'Peut être obtenu sur'
-            )
-            .closest('.ak-panel')
-            .find('.ak-list-element')
-            .each((_, el) => {
-            const anchor = $(el).find('.ak-title a');
-
-            const name = anchor.find('.ak-linker').first().text().trim();
-
-            const href = anchor.attr('href');
-            const idMatch = href?.match(/monstres\/(\d+)-/);
-            const wakfuId = idMatch ? Number(idMatch[1]) : null;
-
-            const dropText = $(el).children('.ak-main')
-                .find('.ak-aside')
-                .first()
-                .text()
-                .trim();
-            const dropRate = Number(dropText.replace('%', ''));
-
-            if (name && wakfuId && !isNaN(dropRate)) {
-                drops.push({ name, wakfuId, dropRate });
-            }
-            });
-
-        return drops;
     }
 
     private getCout($: CheerioAPI): Record<string, number> {

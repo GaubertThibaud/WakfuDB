@@ -1,8 +1,10 @@
+import { seedJobs } from "../jobs/jobs.seed"
 import { seedStats } from "../stats/stats.seed"
 
 // Start the seeder
 async function main() {
   await seedStats()
+  await seedJobs()
 }
 
 main()

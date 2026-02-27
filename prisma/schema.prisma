@@ -142,9 +142,48 @@ model Item {
   monsterHarvest MonsterHarvest[]
   weaponDamages  WeaponDamage[]
 
+  recipesUsedIn  RecipeIngredient[]
+  recipesResult  Recipe[] @relation("RecipeResult")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Job {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  recipes     Recipe[]
+  urlIcon     String?
+  description String?
+}
+
+model Recipe {
+  id        Int    @id @default(autoincrement())
+  level     Int
+  jobId     Int
+  resultId  Int    
+
+  job       Job    @relation(fields: [jobId], references: [id])
+  result    Item   @relation("RecipeResult", fields: [resultId], references: [id])
+
+  ingredients RecipeIngredient[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RecipeIngredient {
+  id         Int @id @default(autoincrement())
+  recipeId   Int
+  itemId     Int
+  quantity   Int
+
+  recipe Recipe @relation(fields: [recipeId], references: [id])
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  @@unique([recipeId, itemId])
+}
+
 
 model WeaponDamage {
   id        Int @id @default(autoincrement())
